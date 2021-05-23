@@ -1,0 +1,4 @@
+blue: eat relax
+green: fawn call
+yellow: please stop
+red: stayaway goaway
