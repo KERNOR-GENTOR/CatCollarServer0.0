@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CatCollarServer
@@ -14,8 +15,15 @@ namespace CatCollarServer
     {
         public static void Main(string[] args)
         {
-            CommandFacade.Process();
-            CreateHostBuilder(args).Build().Run();
+            CommandFacad.CreateModels();
+            //CreateHostBuilder(args).Build().Run();
+
+            Task taskRecorder = Task.Factory.StartNew(() => { Recorder.Run(); });
+            Task taskHttp = Task.Factory.StartNew(() => CreateHostBuilder(args).Build().Run());
+
+            taskRecorder.Wait();
+            taskHttp.Wait();
+
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

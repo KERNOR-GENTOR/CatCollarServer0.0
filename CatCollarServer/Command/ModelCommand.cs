@@ -3,6 +3,7 @@ using CatCollarServer.AudioModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CatCollarServer.Command
@@ -52,11 +53,13 @@ namespace CatCollarServer.Command
                 return;
             }
 
-            // Inin storage
-            if (context.Storage.Init())
-            {
-                return;
-            }
+            // Inin storage 
+            context.Storage.Init();
+
+            //if (context.Storage.Init())
+            //{
+            //    return;
+            //}
 
             // Find the model
             Model model = null;
@@ -79,12 +82,12 @@ namespace CatCollarServer.Command
 
             // Add the sample to the model
             context.Storage.AddSample(model.Id, word);
-            context.Storage.Persist();
+            //context.Storage.Persist();
 
             Console.WriteLine("The new sample has been successfully added!");
         }
         
-        public static string Recognize(ref Context context, in string modelNameChar)
+        public static string Recognize(ref Context context, in List<string> modelNames)
         {
             // Check the storage
             if(!context.Storage.Init())
@@ -106,11 +109,11 @@ namespace CatCollarServer.Command
             List<Model> modelsFiltered = new List<Model>();
             Dictionary<uint, Model> models = context.Storage.Models;
 
-            List<string> modelNames = new List<string>();
-            if(modelNameChar != null)
-            {
-                modelNames = modelNameChar.Split(',').ToList();
-            }
+            //List<string> modelNames = new List<string>();
+            //if(modelNameChar != null)
+            //{
+            //    modelNames = modelNameChar.Split(',').ToList();
+            //}
 
             foreach(var m in models)
             {
@@ -128,10 +131,10 @@ namespace CatCollarServer.Command
             //Get result
             if(model != null)
             {
-                return model.Text;
+                return Regex.Replace(model.Text, "[0-9]", "");
             }
 
-            return "--no result--";
+            return "No result";
         }
 
         private static Word GetWord(ref Context context)

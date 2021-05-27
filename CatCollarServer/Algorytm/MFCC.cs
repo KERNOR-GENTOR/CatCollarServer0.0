@@ -23,6 +23,20 @@ namespace CatCollarServer.Algorytm
             // Calc
             double[] fourierRaw = FourierTransform(source, start, sampleLength, true);
             double[][] melFilters = GetMelFilters(mfccSize, sampleLength, frequency, freqMin, freqMax);
+
+            //!!!
+            for (int i = 0; i < melFilters.Length; i++)
+            {
+                for (int j = 0; j < melFilters[i].Length; j++)
+                {
+                    if (melFilters[i][j] < 0)
+                    {
+                        melFilters[i][j] *= -1;
+                    }
+                }
+            }
+            //!!!
+
             double[] logPower = CalcPower(fourierRaw, sampleLength, melFilters, mfccSize);
             double[] dctRaw = DCTTransform(logPower, mfccSize);
 
@@ -103,6 +117,11 @@ namespace CatCollarServer.Algorytm
         {
             // Create points for filter banks
             double[] fb = new double[mfccSize + 2];
+
+            //!!!
+            double[] fbFloor = new double[mfccSize + 2];
+            //!!!
+
             fb[0] = convertToMel(freqMin);
             fb[mfccSize + 1] = convertToMel(freqMax);
 
@@ -119,7 +138,10 @@ namespace CatCollarServer.Algorytm
                 fb[m] = convertFromMel(fb[m]);
 
                 // Map those frequencies to the nearest FT bin
-                fb[m] = Math.Floor((filterLength + 1) * fb[m] / (double)frequency);
+                fb[m] = (filterLength + 1) * fb[m] / (double)frequency;
+
+                //fb[m] = Math.Floor((filterLength + 1) * fb[m] / (double)frequency);
+                fbFloor[m] = Math.Floor((filterLength + 1) * fb[m] / (double)frequency);
             }
 
             // Calc filter banks
@@ -134,15 +156,15 @@ namespace CatCollarServer.Algorytm
                 for (uint k = 0; k < filterLength; k++)
                 {
 
-                    if (fb[m - 1] <= k && k <= fb[m])
+                    //if (fb[m - 1] <= k && k <= fb[m])
+                    if (fbFloor[m - 1] <= k && k <= fbFloor[m])
                     {
                         filterBanks[m - 1][k] = (k - fb[m - 1]) / (fb[m] - fb[m - 1]);
-
                     }
-                    else if (fb[m] < k && k <= fb[m + 1])
+                    //else if (fb[m] < k && k <= fb[m + 1])
+                    else if (fbFloor[m] < k && k <= fbFloor[m + 1])
                     {
                         filterBanks[m - 1][k] = (fb[m + 1] - k) / (fb[m + 1] - fb[m]);
-
                     }
                     else
                     {

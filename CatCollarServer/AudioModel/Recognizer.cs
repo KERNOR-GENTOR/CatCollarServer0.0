@@ -26,7 +26,9 @@ namespace CatCollarServer.AudioModel
                 double distance = 0;
                 foreach(MFCCSample sample in model.Samples)
                 {
-                    distance += DTW.CalcDistanceVector(word.MFCC, word.MFCCSize, sample.data, sample.size, (byte)AudioParameters.MFCC_SIZE);
+                    if (sample.size == AudioParameters.MFCC_SIZE)//!!!!!!!!!!
+                        distance += DTW.CalcDistanceVector(word.MFCC, word.MFCCSize, sample.data, sample.size, (byte)AudioParameters.MFCC_SIZE);
+                    else distance = double.MaxValue; //!!!!!!!!!!
                 }
                 distance /= model.Samples.Count;
 

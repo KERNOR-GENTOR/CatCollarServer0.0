@@ -10,7 +10,7 @@ namespace CatCollarServer.Command
 {
     public static class AudioDataCommand
     {
-        const string output_folder = "..\\Output";
+        const string output_folder = "..\\Output\\";
 
         public static bool ReadData(ref Context context, in string inputFile)
         {

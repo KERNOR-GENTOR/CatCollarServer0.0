@@ -9,7 +9,7 @@ namespace CatCollarServer.Audio
 	public static class AudioParameters
     {
 		//Length of frame(ms)
-		public const uint FRAME_LENGTH = 10;
+		public const double FRAME_LENGTH = 10;
 
 		//Percentage of overlap for frames (0 <= x < 1)
 		public const double FRAME_OVERLAP = 0.5;

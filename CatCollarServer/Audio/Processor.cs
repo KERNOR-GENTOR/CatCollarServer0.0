@@ -74,6 +74,16 @@ namespace CatCollarServer.Audio
                 }
                 else
                 {
+                    //!!!!!!!!!
+                    if (Frames.Count == 0)
+                    {
+                        Frame frame = new Frame(frameId);
+                        frame.Init(WaveData.RawData, WaveData.NormalizedData, 0, size - 1);
+                        //Frames.Insert((int)(Frames.IndexOf(Frames.FirstOrDefault()) + frameId), frame);
+                        Frames.Insert((int)frameId, frame);
+                        frameToRaw.Add(frameId, new Tuple<uint, uint>(0, size - 1));
+                    }
+                    //!!!!!!!!!!!
                     break;
                 }
             }
@@ -253,7 +263,7 @@ namespace CatCollarServer.Audio
                 uint rawBegin = frameToRaw[firstId + i].Item1;
                 uint rawEnd = frameToRaw[firstId + i].Item2;
 
-                double[] frameMFCC = Frames[(int)firstId + 1].InitMFCC(WaveData.NormalizedData, rawBegin, rawEnd, WaveData.Header.SamplesPerSec);
+                double[] frameMFCC = Frames[(int)(firstId + i)].InitMFCC(WaveData.NormalizedData, rawBegin, rawEnd, (uint)WaveData.Header.SamplesPerSec);
 
                 for (uint j = 0; j < AudioParameters.MFCC_SIZE; j++)
                 {
@@ -273,10 +283,10 @@ namespace CatCollarServer.Audio
 
             // Prepare a new header and write it to file stream
             WavHeader header = new WavHeader();
-            WaveData.Header.RIFF.CopyTo(0, header.RIFF.ToArray(), 0, 4);
+            WaveData.Header.RIFF = header.RIFF.ToArray();
             header.ChunkSize = waveSize + WavData.WavHeaderSizeOf;
-            WaveData.Header.Wave.CopyTo(0, header.Wave.ToArray(), 0, 4);
-            WaveData.Header.FMT.CopyTo(0, header.FMT.ToArray(), 0, 4);
+            WaveData.Header.Wave = header.Wave;
+            WaveData.Header.FMT = header.FMT;
             header.Subchunk1Size = WaveData.Header.Subchunk1Size;
             header.AudioFormat = WaveData.Header.AudioFormat;
             header.NumberOfChan = 1;
@@ -284,7 +294,7 @@ namespace CatCollarServer.Audio
             header.BytesPerSec = WaveData.Header.SamplesPerSec * sizeof(short);
             header.BlockAlign = sizeof(short);
             header.BitsPerSample = sizeof(short) * 8;
-            WaveData.Header.Data.CopyTo(0, header.Data.ToArray(), 0, 4);
+            WaveData.Header.Data = header.Data;
             header.Subchunk2Size = waveSize;
 
             BinaryWriter writer = new BinaryWriter(File.Open(path, FileMode.Open));
@@ -304,6 +314,7 @@ namespace CatCollarServer.Audio
                 frameNumber++;
             }
             writer.Write(Serialization.Serialize(data), 0, (int)waveSize);
+            writer.BaseStream.Close();
             writer.Close();
         }
 
@@ -311,9 +322,9 @@ namespace CatCollarServer.Audio
         {
             bool isPartOfWord = false;
 
-            for(uint i = 0; i < Words.Count; i++)
+            for (uint i = 0; i < Words.Count; i++)
             {
-                if(wordToFrames[i].Item1 <= frame.Id && frame.Id <= wordToFrames[i].Item2)
+                if (wordToFrames[i].Item1 <= frame.Id && frame.Id <= wordToFrames[i].Item2)
                 {
                     isPartOfWord = true;
                     break;

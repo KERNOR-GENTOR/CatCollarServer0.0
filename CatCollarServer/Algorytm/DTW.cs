@@ -14,7 +14,7 @@ namespace CatCollarServer.Algorytm
             {
                 for (uint j = 0; j < seq2size; j++)
                 {
-                    diffM[i,j] = Math.Abs(seq1[i] - seq2[j]);
+                    diffM[i, j] = Math.Abs(seq1[i] - seq2[j]);
                 }
             }
 
@@ -70,40 +70,40 @@ namespace CatCollarServer.Algorytm
             // Create distance matrix (forward direction)
             double[,] pathM = new double[seq1size, seq2size];
 
-            pathM[0, 0] = diffM[0,0];
+            pathM[0, 0] = diffM[0, 0];
             for (uint i = 1; i < seq1size; i++)
             {
-                pathM[i,0] = diffM[i,0] + pathM[i - 1,0];
+                pathM[i, 0] = diffM[i, 0] + pathM[i - 1, 0];
             }
             for (uint j = 1; j < seq2size; j++)
             {
-                pathM[0,j] = diffM[0,j] + pathM[0,j - 1];
+                pathM[0, j] = diffM[0, j] + pathM[0, j - 1];
             }
 
             for (uint i = 1; i < seq1size; i++)
             {
                 for (uint j = 1; j < seq2size; j++)
                 {
-                    if (pathM[i - 1,j - 1] < pathM[i - 1,j])
+                    if (pathM[i - 1, j - 1] < pathM[i - 1, j])
                     {
-                        if (pathM[i - 1,j - 1] < pathM[i,j - 1])
+                        if (pathM[i - 1, j - 1] < pathM[i, j - 1])
                         {
-                            pathM[i,j] = diffM[i,j] + pathM[i - 1,j - 1];
+                            pathM[i, j] = diffM[i, j] + pathM[i - 1, j - 1];
                         }
                         else
                         {
-                            pathM[i,j] = diffM[i,j] + pathM[i,j - 1];
+                            pathM[i, j] = diffM[i, j] + pathM[i, j - 1];
                         }
                     }
                     else
                     {
-                        if (pathM[i - 1,j] < pathM[i,j - 1])
+                        if (pathM[i - 1, j] < pathM[i, j - 1])
                         {
-                            pathM[i,j] = diffM[i,j] + pathM[i - 1,j];
+                            pathM[i, j] = diffM[i, j] + pathM[i - 1, j];
                         }
                         else
                         {
-                            pathM[i,j] = diffM[i,j] + pathM[i,j - 1];
+                            pathM[i, j] = diffM[i, j] + pathM[i, j - 1];
                         }
                     }
                 }
@@ -117,51 +117,59 @@ namespace CatCollarServer.Algorytm
             uint ii = seq1size - 1;
             uint jj = seq2size - 1;
 
-            warpPath[warpPathIndex] = pathM[ii,jj];
-
-            do
+            warpPath[warpPathIndex] = pathM[ii, jj];
+            if (warpSize > 1)
             {
-                if (ii > 0 && jj > 0)
+                do
                 {
-                    if (pathM[ii - 1,jj - 1] < pathM[ii - 1,jj])
+                    if (ii > 0 && jj > 0)
                     {
-                        if (pathM[ii - 1,jj - 1] < pathM[ii,jj - 1])
+                        if (pathM[ii - 1, jj - 1] < pathM[ii - 1, jj])
                         {
-                            ii--;
-                            jj--;
+                            if (pathM[ii - 1, jj - 1] < pathM[ii, jj - 1])
+                            {
+                                ii--;
+                                jj--;
+                            }
+                            else
+                            {
+                                jj--;
+                            }
                         }
                         else
                         {
-                            jj--;
+                            if (pathM[ii - 1, jj] < pathM[ii, jj - 1])
+                            {
+                                ii--;
+                            }
+                            else
+                            {
+                                jj--;
+                            }
                         }
+
                     }
                     else
                     {
-                        if (pathM[ii - 1,jj] < pathM[ii,jj - 1])
+                        if (ii == 0)
                         {
-                            ii--;
+                            if (jj != 0)
+                            {
+                                jj--;
+                            }
                         }
                         else
                         {
-                            jj--;
+                            if (ii != 0)
+                            {
+                                ii--;
+                            }
                         }
                     }
 
-                }
-                else
-                {
-                    if (ii == 0)
-                    {
-                        jj--;
-                    }
-                    else
-                    {
-                        ii--;
-                    }
-                }
-
-                warpPath[++warpPathIndex] = pathM[ii,jj];
-            } while (ii > 0 || jj > 0);
+                    warpPath[++warpPathIndex] = pathM[ii, jj];
+                } while (ii > 0 || jj > 0);
+            }
 
             // Calculate path measure
             double distance = 0.0;

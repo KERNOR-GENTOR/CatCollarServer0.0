@@ -10,7 +10,7 @@ namespace CatCollarServer.AudioModel
 {
     public class Storage
     {
-        private const string storage_examples_file = "..\\Resources\\models.dat";
+        private const string storage_examples_file = "..\\CatCollarServer\\Resources\\models.dat";
         private const string storage_header = "DATAS";
 
         public Dictionary<uint, Model> Models { get; private set; }
@@ -33,41 +33,53 @@ namespace CatCollarServer.AudioModel
             Console.WriteLine("Loading models from the storage");
             if (File.Exists(storage_examples_file))
             {
-                BinaryReader reader = new BinaryReader(File.Open(storage_examples_file, FileMode.Open));
-                if (reader == null)
+                using (Stream file = File.Open(storage_examples_file, FileMode.Open))
                 {
-                    Console.WriteLine("Can't access the model's storage");
-                }
-                char[] header = new char[4];
-                reader.Read(header, 0, sizeof(char) * 4);
-                if (header.ToString() != storage_header)
-                {
-                    Console.WriteLine("Invalid storage");
-                    return false;
-                }
+                    BinaryReader reader = new BinaryReader(file);
 
-                byte[] maxIdBuffer = new byte[sizeof(uint)];
-                reader.Read(maxIdBuffer, 0, sizeof(uint));
-                maxId = Serialization.Deserialize<uint>(maxIdBuffer);
+                    if (reader == null)
+                    {
+                        Console.WriteLine("Can't access the model's storage");
+                    }
 
-                string tmpName = "";
-                for (uint i = 0; i < maxId; i++)
-                {
-                    Model model = new Model(tmpName);
-                    model.Read(ref reader);
+                    byte[] header = new byte[(storage_header.Length)];
+                    reader.Read(header, 0, (storage_header.Length));
 
-                    Models.Add(model.Id, model);
+                    if (System.Text.ASCIIEncoding.ASCII.GetString(header) != storage_header)
+                    {
+                        Console.WriteLine("Invalid storage");
+                        return false;
+                    }
+
+                    byte[] maxIdBuffer = reader.ReadBytes(sizeof(uint));
+                    maxId = BitConverter.ToUInt32(maxIdBuffer);
+
+                    string tmpName = "";
+                    for (uint i = 0; i < maxId; i++)
+                    {
+                        Model model = new Model(tmpName);
+                        model.Read(ref reader);
+
+                        Models.Add(model.Id, model);
+                    }
+
+                    reader.BaseStream.Close();
+                    reader.Close();
                 }
-                reader.Close();
             }
             else
             {
-                BinaryWriter writer = new BinaryWriter(File.Open(storage_examples_file, FileMode.Create));
-                Console.WriteLine("Storage not found, creating an empty one");
+                using (BinaryWriter writer = new BinaryWriter(File.Open(storage_examples_file, FileMode.Create)))
+                {
+                    Console.WriteLine("Storage not found, creating an empty one");
+                    writer.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(storage_header));
+                    writer.Write(BitConverter.GetBytes(maxId));
+                    writer.BaseStream.Close();
+                    writer.Close();
+                }
 
-                writer.Write(Serialization.Serialize(storage_header), 0, sizeof(char) * 4);
-                writer.Write(Serialization.Serialize(maxId), 0, sizeof(uint));
-                writer.Close();
+                ///!!!!!!!!!!
+                return false;
             }
 
             return true;
@@ -89,21 +101,25 @@ namespace CatCollarServer.AudioModel
         //Save models into the file
         public bool Persist()
         {
-            BinaryWriter writer = new BinaryWriter(File.Open(storage_examples_file, FileMode.Create));
-            if (writer == null)
+            using (Stream file = File.Open(storage_examples_file, FileMode.Create))
             {
-                Console.WriteLine("Can't access the model's storage");
-            }
+                BinaryWriter writer = new BinaryWriter(file);
+                if (writer == null)
+                {
+                    Console.WriteLine("Can't access the model's storage");
+                }
 
-            writer.Write(storage_header.ToCharArray(), 0, sizeof(char) * 4);
-            writer.Write(Serialization.Serialize(maxId), 0, sizeof(uint));
+                writer.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(storage_header));
+                writer.Write(BitConverter.GetBytes(maxId));
 
-            foreach(var model in Models)
-            {
-                Model tmpModel = model.Value;
-                tmpModel.Write(ref writer);
+                foreach (var model in Models)
+                {
+                    Model tmpModel = model.Value;
+                    tmpModel.Write(ref writer);
+                }
+                writer.BaseStream.Close();
+                writer.Close();
             }
-            writer.Close();
             Console.WriteLine("Done!");
             return true;
         }
