@@ -313,7 +313,7 @@ namespace CatCollarServer.Audio
                 }
                 frameNumber++;
             }
-            writer.Write(Serialization.Serialize(data), 0, (int)waveSize);
+            writer.Write(data.SelectMany(value => BitConverter.GetBytes(value)).ToArray());
             writer.BaseStream.Close();
             writer.Close();
         }
